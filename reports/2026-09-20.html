@@ -182,7 +182,7 @@ body {
 }
 .game-row, .game-row-header {
   display: grid;
-  grid-template-columns: 24px 2fr 0.65fr 0.5fr 0.45fr 0.8fr 1.3fr;
+  grid-template-columns: 24px 2fr 0.65fr 0.5fr 0.45fr 0.8fr 1fr 0.7fr;
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
@@ -220,6 +220,25 @@ body {
 .progress-fill.critical { background: var(--color-status-critical); }
 .progress-label { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-top: 2px; }
 
+/* 即期達成率：故意跟左邊的進度條(.progress-track/.progress-fill)長得不一樣，
+   純文字badge樣式，一眼就能跟「本日達成率」的進度條分開，不會看錯是哪個
+   時間尺度的數字（見對話紀錄「即期達成率」的討論）。*/
+.period-ach-badge {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+}
+/* 用寫死的淺色底色（不是color-mix()）是故意的：Email版共用同一套class，
+   Outlook/Gmail等信箱用戶端對新版CSS函式支援很差，寫死hex色碼保證兩邊都
+   能正常顯示，跟theme_tokens.css裡--color-status-*對應的深色文字搭配。 */
+.period-ach-badge.ok { background: #e6f7ec; color: var(--color-status-ok); }
+.period-ach-badge.warning { background: #fdf0e4; color: var(--color-status-warning); }
+.period-ach-badge.critical { background: #fdecea; color: var(--color-status-critical); }
+
 .game-detail {
   display: none;
   padding: 0 var(--spacing-md) var(--spacing-lg) var(--spacing-md);
@@ -240,7 +259,10 @@ body {
 
 .metric-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* 從固定4欄改成auto-fit，因為現在有5張卡（新增「即期累計達成率」），
+     固定4欄會讓第5張卡獨佔一整行、旁邊空3欄很奇怪；auto-fit會自動決定
+     每行放幾張，卡片數量以後再變動也不用回來調這裡。 */
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
 }
@@ -281,7 +303,7 @@ body {
         <img src="data:image/png;base64,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" alt="VNG">
         <h1>GSTPE 全產品日報</h1>
       </div>
-      <div class="meta">資料日期：2026-09-20　生成時間：2026-09-21T16:01:16.961523+08:00</div>
+      <div class="meta">資料日期：2026-09-20　生成時間：2026-09-21T18:27:44.721802+08:00</div>
     </div>
     <div class="actions">
       <button onclick="window.print()">下載 PDF</button>
@@ -294,37 +316,35 @@ body {
   <div class="daily-strip-caption">累計期間：9/1~9/20</div>
   
   
-  <div class="daily-strip-caption" style="color: var(--color-status-warning);">注意：2026-09-20 缺少歷史報表資料，期間累計目標可能被低估</div>
-  
   <div class="daily-strip">
     <div class="daily-strip-item accent-all">
       
       <div class="row-top">
         <span class="label">全產品累計達成率</span>
-        <span class="value">83.9%</span>
+        <span class="value">80.3%</span>
       </div>
       <div class="sub-value">
-        $236,308 / $281,687
+        $236,308 / $294,323
       </div>
     </div>
     <div class="daily-strip-item accent-twhkmo">
       
       <div class="row-top">
         <span class="label">TWHKMO累計達成率</span>
-        <span class="value">74.6%</span>
+        <span class="value">71.5%</span>
       </div>
       <div class="sub-value">
-        $154,028 / $206,556
+        $154,028 / $215,507
       </div>
     </div>
     <div class="daily-strip-item accent-sgmy">
       
       <div class="row-top">
         <span class="label">SGMY累計達成率</span>
-        <span class="value">109.5%</span>
+        <span class="value">104.4%</span>
       </div>
       <div class="sub-value">
-        $82,281 / $75,131
+        $82,281 / $78,816
       </div>
     </div>
   </div>
@@ -392,12 +412,13 @@ body {
       <div>DAU</div>
       <div>NRU</div>
       <div>營收較昨日</div>
-      <div>本日營收達成率</div>
+      <div>本日達成率</div>
+      <div>即期達成率</div>
     </div>
     
     <div class="game-row" onclick="toggleDetail('gno_twhkmo')">
       <div class="dot critical"></div>
-      <div class="game-name">GNO-TWHKMO（彈彈堂）</div>
+      <div class="game-name">GNO-TWHKMO</div>
 
       
         <div>$1,250</div>
@@ -414,7 +435,14 @@ body {
             <div class="progress-track">
               <div class="progress-fill critical" style="width: 23.72%;"></div>
             </div>
-            <div class="progress-label">本日營收達成率 23.7%</div>
+            <div class="progress-label">23.7%</div>
+          
+        </div>
+        <div>
+          
+            <span class="period-ach-badge critical">
+              66.0%
+            </span>
           
         </div>
       
@@ -444,6 +472,13 @@ body {
             <div class="value highlight">
               
               45%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="label">即期(9/1~今日)累計達成率</div>
+            <div class="value highlight">
+              
+              66%
             </div>
           </div>
         </div>
@@ -502,7 +537,7 @@ body {
     
     <div class="game-row" onclick="toggleDetail('gno_sgmy')">
       <div class="dot critical"></div>
-      <div class="game-name">GNO-SGMY（彈彈堂）</div>
+      <div class="game-name">GNO-SGMY</div>
 
       
         <div>$1,885</div>
@@ -519,7 +554,14 @@ body {
             <div class="progress-track">
               <div class="progress-fill critical" style="width: 58.85%;"></div>
             </div>
-            <div class="progress-label">本日營收達成率 58.9%</div>
+            <div class="progress-label">58.9%</div>
+          
+        </div>
+        <div>
+          
+            <span class="period-ach-badge warning">
+              98.7%
+            </span>
           
         </div>
       
@@ -549,6 +591,13 @@ body {
             <div class="value highlight">
               
               59%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="label">即期(9/1~今日)累計達成率</div>
+            <div class="value highlight">
+              
+              99%
             </div>
           </div>
         </div>
@@ -607,7 +656,7 @@ body {
     
     <div class="game-row" onclick="toggleDetail('csb')">
       <div class="dot warning"></div>
-      <div class="game-name">CSB（天上碑）</div>
+      <div class="game-name">CSB</div>
 
       
         <div>$1,928</div>
@@ -624,7 +673,14 @@ body {
             <div class="progress-track">
               <div class="progress-fill warning" style="width: 71.5%;"></div>
             </div>
-            <div class="progress-label">本日營收達成率 71.5%</div>
+            <div class="progress-label">71.5%</div>
+          
+        </div>
+        <div>
+          
+            <span class="period-ach-badge critical">
+              67.3%
+            </span>
           
         </div>
       
@@ -654,6 +710,13 @@ body {
             <div class="value highlight">
               
               44%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="label">即期(9/1~今日)累計達成率</div>
+            <div class="value highlight">
+              
+              67%
             </div>
           </div>
         </div>
@@ -712,7 +775,7 @@ body {
     
     <div class="game-row" onclick="toggleDetail('ms_twhkmo')">
       <div class="dot critical"></div>
-      <div class="game-name">MS-TWHKMO（合金彈頭）</div>
+      <div class="game-name">MS-TWHKMO</div>
 
       
         <div>$425</div>
@@ -729,7 +792,14 @@ body {
             <div class="progress-track">
               <div class="progress-fill critical" style="width: 43.169999999999995%;"></div>
             </div>
-            <div class="progress-label">本日營收達成率 43.2%</div>
+            <div class="progress-label">43.2%</div>
+          
+        </div>
+        <div>
+          
+            <span class="period-ach-badge warning">
+              93.4%
+            </span>
           
         </div>
       
@@ -759,6 +829,13 @@ body {
             <div class="value highlight">
               
               57%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="label">即期(9/1~今日)累計達成率</div>
+            <div class="value highlight">
+              
+              93%
             </div>
           </div>
         </div>
@@ -817,7 +894,7 @@ body {
     
     <div class="game-row" onclick="toggleDetail('ms_sgmy')">
       <div class="dot ok"></div>
-      <div class="game-name">MS-SGMY（合金彈頭）</div>
+      <div class="game-name">MS-SGMY</div>
 
       
         <div>$588</div>
@@ -834,7 +911,14 @@ body {
             <div class="progress-track">
               <div class="progress-fill ok" style="width: 100%;"></div>
             </div>
-            <div class="progress-label">本日營收達成率 122.1%</div>
+            <div class="progress-label">122.1%</div>
+          
+        </div>
+        <div>
+          
+            <span class="period-ach-badge ok">
+              119.4%
+            </span>
           
         </div>
       
@@ -864,6 +948,13 @@ body {
             <div class="value highlight">
               
               70%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="label">即期(9/1~今日)累計達成率</div>
+            <div class="value highlight">
+              
+              119%
             </div>
           </div>
         </div>
@@ -935,9 +1026,9 @@ function toggleDetail(gameId) {
 }
 
 function copySummary() {
-  const games = [{"achievement": {"nru_ach_rate": 0.8478, "revenue_ach_rate": 0.2372}, "cumulative_total": {"arppu": 624.65, "arpu": 87.39, "npu": 46176, "nru": 330063, "pay_rate": 0.14, "revenue": 28844012.13}, "daily": {"arppu": 25.0, "arpu": 1.02, "dau": 1222, "npu": 3, "nru": 39, "pay_rate": 0.04, "pu": 50, "revenue": 1249.77}, "error": null, "game_id": "gno_twhkmo", "game_name": "GNO-TWHKMO\uff08\u5f48\u5f48\u5802\uff09", "insight_text": "", "kpi_targets": {"nru_target": 46.0, "revenue_target": 5269.0}, "monthly": {"ach_rate": 0.4455, "arppu": 104.13, "arpu": 20.11, "kpi_target": 151000.0, "mau": 3345, "mpu": 646, "pay_rate": 0.19, "revenue": 67267.31}, "revenue_change_vs_yesterday": -39.44, "status": "critical", "trend_7d": [{"date": "9/14", "revenue": 2459.12}, {"date": "9/15", "revenue": 1662.89}, {"date": "9/16", "revenue": 1745.26}, {"date": "9/17", "revenue": 2965.5}, {"date": "9/18", "revenue": 1654.06}, {"date": "9/19", "revenue": 2063.61}, {"date": "9/20", "revenue": 1249.77}]}, {"achievement": {"nru_ach_rate": 1.76, "revenue_ach_rate": 0.5885}, "cumulative_total": {"arppu": 538.87, "arpu": 84.95, "npu": 19474, "nru": 123531, "pay_rate": 0.16, "revenue": 10493978.51}, "daily": {"arppu": 29.0, "arpu": 1.72, "dau": 1099, "npu": 5, "nru": 44, "pay_rate": 0.06, "pu": 65, "revenue": 1884.85}, "error": null, "game_id": "gno_sgmy", "game_name": "GNO-SGMY\uff08\u5f48\u5f48\u5802\uff09", "insight_text": "", "kpi_targets": {"nru_target": 25.0, "revenue_target": 3203.0}, "monthly": {"ach_rate": 0.5919, "arppu": 94.51, "arpu": 19.47, "kpi_target": 95000.0, "mau": 2888, "mpu": 595, "pay_rate": 0.21, "revenue": 56231.09}, "revenue_change_vs_yesterday": 4.5, "status": "critical", "trend_7d": [{"date": "9/14", "revenue": 3563.48}, {"date": "9/15", "revenue": 2535.4}, {"date": "9/16", "revenue": 3063.71}, {"date": "9/17", "revenue": 3263.21}, {"date": "9/18", "revenue": 2610.56}, {"date": "9/19", "revenue": 1803.63}, {"date": "9/20", "revenue": 1884.85}]}, {"achievement": {"nru_ach_rate": 18.5, "revenue_ach_rate": 0.715}, "cumulative_total": {"arppu": 1549.87, "arpu": 71.21, "npu": 8727, "nru": 189946, "pay_rate": 0.05, "revenue": 13525720.26}, "daily": {"arppu": 52.12, "arpu": 1.16, "dau": 1660, "npu": 36, "nru": 37, "pay_rate": 0.02, "pu": 37, "revenue": 1928.35}, "error": null, "game_id": "csb", "game_name": "CSB\uff08\u5929\u4e0a\u7891\uff09", "insight_text": "", "kpi_targets": {"nru_target": 2.0, "revenue_target": 2697.0}, "monthly": {"ach_rate": 0.4418, "arppu": 165.72, "arpu": 19.87, "kpi_target": 112523.0, "mau": 2502, "mpu": 300, "pay_rate": 0.12, "revenue": 49716.8}, "revenue_change_vs_yesterday": -31.58, "status": "warning", "trend_7d": [{"date": "9/14", "revenue": 1529.36}, {"date": "9/15", "revenue": 1026.49}, {"date": "9/16", "revenue": 6223.67}, {"date": "9/17", "revenue": 3901.63}, {"date": "9/18", "revenue": 2957.71}, {"date": "9/19", "revenue": 2818.47}, {"date": "9/20", "revenue": 1928.35}]}, {"achievement": {"nru_ach_rate": 2.1667, "revenue_ach_rate": 0.4317}, "cumulative_total": {"arppu": 334.17, "arpu": 40.17, "npu": 58679, "nru": 488107, "pay_rate": 0.12, "revenue": 19608953.79}, "daily": {"arppu": 8.86, "arpu": 0.38, "dau": 1117, "npu": 48, "nru": 13, "pay_rate": 0.04, "pu": 48, "revenue": 425.25}, "error": null, "game_id": "ms_twhkmo", "game_name": "MS-TWHKMO\uff08\u5408\u91d1\u5f48\u982d\uff09", "insight_text": "", "kpi_targets": {"nru_target": 6.0, "revenue_target": 985.0}, "monthly": {"ach_rate": 0.5699, "arppu": 118.35, "arpu": 20.67, "kpi_target": 65000.0, "mau": 1792, "mpu": 313, "pay_rate": 0.17, "revenue": 37043.5}, "revenue_change_vs_yesterday": -44.62, "status": "critical", "trend_7d": [{"date": "9/14", "revenue": 4602.89}, {"date": "9/15", "revenue": 1328.96}, {"date": "9/16", "revenue": 4084.65}, {"date": "9/17", "revenue": 948.15}, {"date": "9/18", "revenue": 632.18}, {"date": "9/19", "revenue": 767.92}, {"date": "9/20", "revenue": 425.25}]}, {"achievement": {"nru_ach_rate": 2.625, "revenue_ach_rate": 1.2207}, "cumulative_total": {"arppu": 181.2, "arpu": 13.34, "npu": 44971, "nru": 610977, "pay_rate": 0.07, "revenue": 8148929.96}, "daily": {"arppu": 24.52, "arpu": 0.62, "dau": 955, "npu": 24, "nru": 42, "pay_rate": 0.03, "pu": 24, "revenue": 588.39}, "error": null, "game_id": "ms_sgmy", "game_name": "MS-SGMY\uff08\u5408\u91d1\u5f48\u982d\uff09", "insight_text": "", "kpi_targets": {"nru_target": 16.0, "revenue_target": 482.0}, "monthly": {"ach_rate": 0.7021, "arppu": 114.76, "arpu": 11.98, "kpi_target": 37100.0, "mau": 2174, "mpu": 227, "pay_rate": 0.1, "revenue": 26049.43}, "revenue_change_vs_yesterday": 133.16, "status": "ok", "trend_7d": [{"date": "9/14", "revenue": 579.55}, {"date": "9/15", "revenue": 535.86}, {"date": "9/16", "revenue": 1945.95}, {"date": "9/17", "revenue": 280.48}, {"date": "9/18", "revenue": 756.64}, {"date": "9/19", "revenue": 252.36}, {"date": "9/20", "revenue": 588.39}]}];
+  const games = [{"achievement": {"nru_ach_rate": 0.8478, "revenue_ach_rate": 0.2372}, "cumulative_total": {"arppu": 624.65, "arpu": 87.39, "npu": 46176, "nru": 330063, "pay_rate": 0.14, "revenue": 28844012.13}, "daily": {"arppu": 25.0, "arpu": 1.02, "dau": 1222, "npu": 3, "nru": 39, "pay_rate": 0.04, "pu": 50, "revenue": 1249.77}, "error": null, "game_id": "gno_twhkmo", "game_name": "GNO-TWHKMO", "insight_text": "", "kpi_targets": {"nru_target": 46.0, "revenue_target": 5269.0}, "monthly": {"ach_rate": 0.4455, "arppu": 104.13, "arpu": 20.11, "kpi_target": 151000.0, "mau": 3345, "mpu": 646, "pay_rate": 0.19, "revenue": 67267.31}, "revenue_change_vs_yesterday": -39.44, "status": "critical", "trend_7d": [{"date": "9/14", "revenue": 2459.12}, {"date": "9/15", "revenue": 1662.89}, {"date": "9/16", "revenue": 1745.26}, {"date": "9/17", "revenue": 2965.5}, {"date": "9/18", "revenue": 1654.06}, {"date": "9/19", "revenue": 2063.61}, {"date": "9/20", "revenue": 1249.77}]}, {"achievement": {"nru_ach_rate": 1.76, "revenue_ach_rate": 0.5885}, "cumulative_total": {"arppu": 538.87, "arpu": 84.95, "npu": 19474, "nru": 123531, "pay_rate": 0.16, "revenue": 10493978.51}, "daily": {"arppu": 29.0, "arpu": 1.72, "dau": 1099, "npu": 5, "nru": 44, "pay_rate": 0.06, "pu": 65, "revenue": 1884.85}, "error": null, "game_id": "gno_sgmy", "game_name": "GNO-SGMY", "insight_text": "", "kpi_targets": {"nru_target": 25.0, "revenue_target": 3203.0}, "monthly": {"ach_rate": 0.5919, "arppu": 94.51, "arpu": 19.47, "kpi_target": 95000.0, "mau": 2888, "mpu": 595, "pay_rate": 0.21, "revenue": 56231.09}, "revenue_change_vs_yesterday": 4.5, "status": "critical", "trend_7d": [{"date": "9/14", "revenue": 3563.48}, {"date": "9/15", "revenue": 2535.4}, {"date": "9/16", "revenue": 3063.71}, {"date": "9/17", "revenue": 3263.21}, {"date": "9/18", "revenue": 2610.56}, {"date": "9/19", "revenue": 1803.63}, {"date": "9/20", "revenue": 1884.85}]}, {"achievement": {"nru_ach_rate": 18.5, "revenue_ach_rate": 0.715}, "cumulative_total": {"arppu": 1549.87, "arpu": 71.21, "npu": 8727, "nru": 189946, "pay_rate": 0.05, "revenue": 13525720.26}, "daily": {"arppu": 52.12, "arpu": 1.16, "dau": 1660, "npu": 36, "nru": 37, "pay_rate": 0.02, "pu": 37, "revenue": 1928.35}, "error": null, "game_id": "csb", "game_name": "CSB", "insight_text": "", "kpi_targets": {"nru_target": 2.0, "revenue_target": 2697.0}, "monthly": {"ach_rate": 0.4418, "arppu": 165.72, "arpu": 19.87, "kpi_target": 112523.0, "mau": 2502, "mpu": 300, "pay_rate": 0.12, "revenue": 49716.8}, "revenue_change_vs_yesterday": -31.58, "status": "warning", "trend_7d": [{"date": "9/14", "revenue": 1529.36}, {"date": "9/15", "revenue": 1026.49}, {"date": "9/16", "revenue": 6223.67}, {"date": "9/17", "revenue": 3901.63}, {"date": "9/18", "revenue": 2957.71}, {"date": "9/19", "revenue": 2818.47}, {"date": "9/20", "revenue": 1928.35}]}, {"achievement": {"nru_ach_rate": 2.1667, "revenue_ach_rate": 0.4317}, "cumulative_total": {"arppu": 334.17, "arpu": 40.17, "npu": 58679, "nru": 488107, "pay_rate": 0.12, "revenue": 19608953.79}, "daily": {"arppu": 8.86, "arpu": 0.38, "dau": 1117, "npu": 48, "nru": 13, "pay_rate": 0.04, "pu": 48, "revenue": 425.25}, "error": null, "game_id": "ms_twhkmo", "game_name": "MS-TWHKMO", "insight_text": "", "kpi_targets": {"nru_target": 6.0, "revenue_target": 985.0}, "monthly": {"ach_rate": 0.5699, "arppu": 118.35, "arpu": 20.67, "kpi_target": 65000.0, "mau": 1792, "mpu": 313, "pay_rate": 0.17, "revenue": 37043.5}, "revenue_change_vs_yesterday": -44.62, "status": "critical", "trend_7d": [{"date": "9/14", "revenue": 4602.89}, {"date": "9/15", "revenue": 1328.96}, {"date": "9/16", "revenue": 4084.65}, {"date": "9/17", "revenue": 948.15}, {"date": "9/18", "revenue": 632.18}, {"date": "9/19", "revenue": 767.92}, {"date": "9/20", "revenue": 425.25}]}, {"achievement": {"nru_ach_rate": 2.625, "revenue_ach_rate": 1.2207}, "cumulative_total": {"arppu": 181.2, "arpu": 13.34, "npu": 44971, "nru": 610977, "pay_rate": 0.07, "revenue": 8148929.96}, "daily": {"arppu": 24.52, "arpu": 0.62, "dau": 955, "npu": 24, "nru": 42, "pay_rate": 0.03, "pu": 24, "revenue": 588.39}, "error": null, "game_id": "ms_sgmy", "game_name": "MS-SGMY", "insight_text": "", "kpi_targets": {"nru_target": 16.0, "revenue_target": 482.0}, "monthly": {"ach_rate": 0.7021, "arppu": 114.76, "arpu": 11.98, "kpi_target": 37100.0, "mau": 2174, "mpu": 227, "pay_rate": 0.1, "revenue": 26049.43}, "revenue_change_vs_yesterday": 133.16, "status": "ok", "trend_7d": [{"date": "9/14", "revenue": 579.55}, {"date": "9/15", "revenue": 535.86}, {"date": "9/16", "revenue": 1945.95}, {"date": "9/17", "revenue": 280.48}, {"date": "9/18", "revenue": 756.64}, {"date": "9/19", "revenue": 252.36}, {"date": "9/20", "revenue": 588.39}]}];
   const monthlyOverview = {"all": {"ach_rate": 0.513, "actual": 236308.13, "target": 460623.0}, "month_label": "9\u6708\u4efd", "sgmy": {"ach_rate": 0.6229, "actual": 82280.52, "target": 132100.0}, "twhkmo": {"ach_rate": 0.4688, "actual": 154027.61, "target": 328523.0}};
-  const dailyOverview = {"all": {"ach_rate": 0.8389, "actual": 236308.13, "target": 281687.0}, "period_label": "9/1~9/20", "sgmy": {"ach_rate": 1.0952, "actual": 82280.52, "target": 75131.0}, "target_incomplete_note": "\u6ce8\u610f\uff1a2026-09-20 \u7f3a\u5c11\u6b77\u53f2\u5831\u8868\u8cc7\u6599\uff0c\u671f\u9593\u7d2f\u8a08\u76ee\u6a19\u53ef\u80fd\u88ab\u4f4e\u4f30", "twhkmo": {"ach_rate": 0.7457, "actual": 154027.61, "target": 206556.0}};
+  const dailyOverview = {"all": {"ach_rate": 0.8029, "actual": 236308.13, "target": 294323.0}, "by_game": {"csb": {"ach_rate": 0.6734, "actual": 49716.8, "target": 73833.0}, "gno_sgmy": {"ach_rate": 0.9865, "actual": 56231.09, "target": 57000.0}, "gno_twhkmo": {"ach_rate": 0.6595, "actual": 67267.31, "target": 101999.0}, "ms_sgmy": {"ach_rate": 1.1941, "actual": 26049.43, "target": 21816.0}, "ms_twhkmo": {"ach_rate": 0.9337, "actual": 37043.5, "target": 39675.0}}, "period_label": "9/1~9/20", "sgmy": {"ach_rate": 1.044, "actual": 82280.52, "target": 78816.0}, "twhkmo": {"ach_rate": 0.7147, "actual": 154027.61, "target": 215507.0}};
   let lines = ["GSTPE 全產品日報 — 2026-09-20", ""];
 
   const fmtBucket = function (label, m) {
