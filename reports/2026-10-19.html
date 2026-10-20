@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>GSTPE 全產品日報 — 2026-10-19</title>
+<style>
+/* =============================================================================
+   AI Operation Hub — 共用 Design Token
+   本次工作環境中找不到既有的 theme.css，以下為起始版本。
+   若專案已有其他工具在用的 theme.css，請以那份為準，覆蓋這個檔案，
+   並確保下方變數名稱對得上，web_report.html.j2 才不用改動。
+   ============================================================================= */
+
+:root {
+  /* --- 品牌色 --- */
+  --color-primary: #4F46E5;
+  --color-primary-dark: #4338CA;
+  --color-bg: #F7F8FA;
+  --color-surface: #FFFFFF;
+  --color-border: #E5E7EB;
+
+  /* --- 文字色 --- */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-text-inverse: #FFFFFF;
+
+  /* --- 狀態色（對應 status: ok / warning / critical） --- */
+  --color-status-ok: #16A34A;
+  --color-status-ok-bg: #DCFCE7;
+  --color-status-warning: #EA580C;
+  --color-status-warning-bg: #FFEDD5;
+  --color-status-critical: #DC2626;
+  --color-status-critical-bg: #FEE2E2;
+
+  /* --- 字體 --- */
+  --font-family-base: "Inter", "Noto Sans TC", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 20px;
+  --font-size-xl: 28px;
+
+  /* --- 間距 --- */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* --- 圓角 / 陰影 --- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* -----------------------------------------------------------------------
+   注意：Email 版不能使用這份 CSS 變數（Email 客戶端不支援 CSS variables），
+   email_report.html.j2 需要把上面色碼直接轉成 hex 寫死在 inline style 裡。
+   兩份色碼須手動保持一致，若之後改色，請同步更新兩處。
+   ----------------------------------------------------------------------- */
+
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--font-family-base);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+}
+.container { max-width: 960px; margin: 0 auto; padding: var(--spacing-lg); }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-lg);
+}
+.header .title-row { display: flex; align-items: center; gap: var(--spacing-sm); margin: 0 0 var(--spacing-xs) 0; }
+.header .title-row img { height: 40px; width: auto; }
+.header h1 { font-size: var(--font-size-xl); margin: 0; }
+.header .meta { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.actions button {
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  margin-left: var(--spacing-sm);
+}
+.actions button:hover { background: var(--color-bg); }
+
+.overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+.overview-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: var(--spacing-md);
+  border-left: 4px solid transparent;
+  text-align: left;
+}
+.overview-card .label { color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+.overview-card .value { font-size: 32px; font-weight: 700; margin-top: var(--spacing-xs); }
+.overview-card .sub-value { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-top: 2px; }
+
+/* 月度達成率卡片左側色條，用不同顏色區分三個範圍，純裝飾不帶燈號語意
+   （不像 .dot/.progress-fill 的 ok/warning/critical 是真的狀態判斷） */
+.overview-card.accent-twhkmo { border-left-color: var(--color-status-ok); }
+.overview-card.accent-sgmy { border-left-color: var(--color-status-warning); }
+
+/* 【2026-09-09調整，見對話紀錄「月份希望更顯眼一些」】原本即日/月度兩排
+   卡片視覺權重完全一樣，只靠上方文字label區分，使用者反映一眼看不出差
+   異、要細看才分得出來。改成方案A：月度是主要視覺焦點，全產品那張用
+   實心底色強調（因為它是最重要的總數），數字也加大；即日改成
+   .daily-strip 那種扁平、淡色的細條，資訊量一樣（label/數值/$明細都還在）
+   但視覺上刻意做得不搶眼，一眼就能分辨「這排是次要的即時參考，那排才是
+   真正要看的月度進度」。 */
+.overview-card.accent-all {
+  background: var(--color-primary);
+  border-left-color: transparent;
+}
+.overview-card.accent-all .label,
+.overview-card.accent-all .value,
+.overview-card.accent-all .sub-value {
+  color: var(--color-text-inverse);
+}
+
+.daily-strip-caption {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+.daily-strip {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+.daily-strip-item {
+  flex: 1;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  border-left: 3px solid transparent;
+}
+/* 【2026-09-10調整，見對話紀錄「希望還是要有線條或色塊差異」】三個桶子
+   （全產品/TWHKMO/SGMY）跟月度卡片共用同一組識別色，讓使用者一眼就能
+   把上面細條跟下面月度卡片對起來看是同一組分類，色條做細一點（3px，
+   月度卡片是4px）維持「這排是次要參考」的視覺層級，不會搶過月度卡片。 */
+.daily-strip-item.accent-all { border-left-color: var(--color-primary); }
+.daily-strip-item.accent-twhkmo { border-left-color: var(--color-status-ok); }
+.daily-strip-item.accent-sgmy { border-left-color: var(--color-status-warning); }
+.daily-strip-item .row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.daily-strip-item .label { font-size: var(--font-size-xs); color: var(--color-text-secondary); white-space: nowrap; }
+.daily-strip-item .value { font-size: var(--font-size-sm); font-weight: 700; white-space: nowrap; }
+.daily-strip-item .sub-value { font-size: 10px; color: var(--color-text-secondary); margin-top: 2px; }
+
+.section-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+
+.game-list {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.game-row, .game-row-header {
+  display: grid;
+  grid-template-columns: 24px 2fr 0.65fr 0.5fr 0.45fr 0.8fr 1fr 0.7fr;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+.game-row { cursor: pointer; }
+.game-row:last-child { border-bottom: none; }
+.game-row:hover { background: var(--color-bg); }
+.game-row-header {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  background: var(--color-bg);
+}
+
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot.ok { background: var(--color-status-ok); }
+.dot.warning { background: var(--color-status-warning); }
+.dot.critical { background: var(--color-status-critical); }
+.dot.unknown, .dot.data_error { background: var(--color-text-secondary); }
+
+.game-name { font-weight: 600; white-space: nowrap; }
+.change-up { color: var(--color-status-ok); }
+.change-down { color: var(--color-status-critical); }
+
+.progress-track {
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  height: 8px;
+  overflow: hidden;
+}
+.progress-fill { height: 100%; border-radius: var(--radius-sm); }
+.progress-fill.ok { background: var(--color-status-ok); }
+.progress-fill.warning { background: var(--color-status-warning); }
+.progress-fill.critical { background: var(--color-status-critical); }
+.progress-label { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-top: 2px; }
+
+/* 即期達成率：故意跟左邊的進度條(.progress-track/.progress-fill)長得不一樣，
+   純文字badge樣式，一眼就能跟「本日達成率」的進度條分開，不會看錯是哪個
+   時間尺度的數字（見對話紀錄「即期達成率」的討論）。*/
+.period-ach-badge {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+}
+/* 用寫死的淺色底色（不是color-mix()）是故意的：Email版共用同一套class，
+   Outlook/Gmail等信箱用戶端對新版CSS函式支援很差，寫死hex色碼保證兩邊都
+   能正常顯示，跟theme_tokens.css裡--color-status-*對應的深色文字搭配。 */
+.period-ach-badge.ok { background: #e6f7ec; color: var(--color-status-ok); }
+.period-ach-badge.warning { background: #fdf0e4; color: var(--color-status-warning); }
+.period-ach-badge.critical { background: #fdecea; color: var(--color-status-critical); }
+
+.game-detail {
+  display: none;
+  padding: 0 var(--spacing-md) var(--spacing-lg) var(--spacing-md);
+  background: var(--color-bg);
+}
+.game-detail.open { display: block; }
+
+.insight-box {
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+.insight-box.empty { color: var(--color-text-secondary); font-style: italic; }
+
+.metric-cards {
+  display: grid;
+  /* 從固定4欄改成auto-fit，因為現在有5張卡（新增「即期累計達成率」），
+     固定4欄會讓第5張卡獨佔一整行、旁邊空3欄很奇怪；auto-fit會自動決定
+     每行放幾張，卡片數量以後再變動也不用回來調這裡。 */
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+.metric-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: center;
+}
+.metric-card .label { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+.metric-card .value { font-size: var(--font-size-lg); font-weight: 700; margin-top: 2px; }
+.metric-card .value.highlight { color: var(--color-status-warning); }
+
+.trend-chart { background: var(--color-surface); border-radius: var(--radius-sm); padding: var(--spacing-md); }
+.trend-chart .title { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--spacing-sm); }
+.bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.bar { width: 60%; background: var(--color-primary); border-radius: 3px 3px 0 0; min-height: 2px; }
+.bar-date { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-top: 4px; }
+
+.error-note { color: var(--color-status-critical); font-size: var(--font-size-sm); padding: var(--spacing-md); }
+
+@media print {
+  .actions { display: none !important; }
+  body { background: #fff; }
+  .game-detail { display: block !important; }
+  .game-row { cursor: default; }
+  .overview { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div>
+      <div class="title-row">
+        <img src="data:image/png;base64,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" alt="VNG">
+        <h1>GSTPE 全產品日報</h1>
+      </div>
+      <div class="meta">資料日期：2026-10-19　生成時間：2026-10-20T16:00:59.028270+08:00</div>
+    </div>
+    <div class="actions">
+      <button onclick="window.print()">下載 PDF</button>
+      <button onclick="copySummary()">複製摘要</button>
+    </div>
+  </div>
+
+  
+  
+  <div class="daily-strip-caption">累計期間：10/1~10/19</div>
+  
+  
+  <div class="daily-strip">
+    <div class="daily-strip-item accent-all">
+      
+      <div class="row-top">
+        <span class="label">全產品累計達成率</span>
+        <span class="value">84.6%</span>
+      </div>
+      <div class="sub-value">
+        $246,696 / $291,668
+      </div>
+    </div>
+    <div class="daily-strip-item accent-twhkmo">
+      
+      <div class="row-top">
+        <span class="label">TWHKMO累計達成率</span>
+        <span class="value">75.0%</span>
+      </div>
+      <div class="sub-value">
+        $140,682 / $187,635
+      </div>
+    </div>
+    <div class="daily-strip-item accent-sgmy">
+      
+      <div class="row-top">
+        <span class="label">SGMY累計達成率</span>
+        <span class="value">101.9%</span>
+      </div>
+      <div class="sub-value">
+        $106,014 / $104,033
+      </div>
+    </div>
+  </div>
+  
+
+  
+  <div class="section-label">10月份達成率總覽</div>
+  <div class="overview">
+    <div class="overview-card accent-all">
+      <div class="label">全產品達成率</div>
+      
+      <div class="value">
+        54.8%
+      </div>
+      <div class="sub-value">
+        營收 $246,696 /
+        目標 $450,029
+      </div>
+    </div>
+    <div class="overview-card accent-twhkmo">
+      <div class="label">TWHKMO達成率</div>
+      
+      <div class="value">
+        47.2%
+      </div>
+      <div class="sub-value">
+        營收 $140,682 /
+        目標 $298,029
+      </div>
+    </div>
+    <div class="overview-card accent-sgmy">
+      <div class="label">SGMY達成率</div>
+      
+      <div class="value">
+        69.8%
+      </div>
+      <div class="sub-value">
+        營收 $106,014 /
+        目標 $152,000
+      </div>
+    </div>
+  </div>
+  
+
+  <div class="overview">
+    <div class="overview-card">
+      <div class="label">全產品總營收</div>
+      <div class="value">$9,915</div>
+    </div>
+    <div class="overview-card">
+      <div class="label">全產品總 DAU</div>
+      <div class="value">5,798</div>
+    </div>
+    <div class="overview-card">
+      <div class="label">需留意產品數量</div>
+      <div class="value">3 / 5</div>
+    </div>
+  </div>
+
+  <div class="game-list">
+    <div class="game-row-header">
+      <div></div>
+      <div>產品</div>
+      <div>營收</div>
+      <div>DAU</div>
+      <div>NRU</div>
+      <div>營收較昨日</div>
+      <div>本日達成率</div>
+      <div>即期達成率</div>
+    </div>
+    
+    <div class="game-row" onclick="toggleDetail('gno_twhkmo')">
+      <div class="dot critical"></div>
+      <div class="game-name">GNO-TWHKMO</div>
+
+      
+        <div>$1,449</div>
+        <div>1,231</div>
+        <div>43</div>
+        <div class="change-down">
+          
+            -27.6%
+          
+        </div>
+        <div>
+          
+          
+            <div class="progress-track">
+              <div class="progress-fill critical" style="width: 47.9%;"></div>
+            </div>
+            <div class="progress-label">47.9%</div>
+          
+        </div>
+        <div>
+          
+            <span class="period-ach-badge warning">
+              83.1%
+            </span>
+          
+        </div>
+      
+    </div>
+
+    <div class="game-detail" id="detail-gno_twhkmo">
+      
+        <div class="insight-box empty">
+          （今日重點尚未填寫）
+        </div>
+
+        <div class="metric-cards">
+          <div class="metric-card">
+            <div class="label">ARPU</div>
+            <div class="value">$1.18</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">ARPPU</div>
+            <div class="value">$23.36</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Pay Rate</div>
+            <div class="value">5.00%</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">月營收達成率</div>
+            <div class="value highlight">
+              
+              53%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="label">即期(9/1~今日)累計達成率</div>
+            <div class="value highlight">
+              
+              83%
+            </div>
+          </div>
+        </div>
+
+        <div class="trend-chart">
+          <div class="title">近 7 日營收趨勢</div>
+          
+          <div class="bars">
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 31.49042282785497%;"
+                   title="10/13: $1,961"></div>
+              <div class="bar-date">10/13</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 100.0%;"
+                   title="10/14: $6,228"></div>
+              <div class="bar-date">10/14</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 60.772050617952%;"
+                   title="10/15: $3,785"></div>
+              <div class="bar-date">10/15</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 45.80359451044747%;"
+                   title="10/16: $2,853"></div>
+              <div class="bar-date">10/16</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 45.759759017185765%;"
+                   title="10/17: $2,850"></div>
+              <div class="bar-date">10/17</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 32.13671535671334%;"
+                   title="10/18: $2,001"></div>
+              <div class="bar-date">10/18</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 23.25914483857138%;"
+                   title="10/19: $1,449"></div>
+              <div class="bar-date">10/19</div>
+            </div>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+    <div class="game-row" onclick="toggleDetail('gno_sgmy')">
+      <div class="dot critical"></div>
+      <div class="game-name">GNO-SGMY</div>
+
+      
+        <div>$2,956</div>
+        <div>1,238</div>
+        <div>80</div>
+        <div class="change-up">
+          
+            +4.2%
+          
+        </div>
+        <div>
+          
+          
+            <div class="progress-track">
+              <div class="progress-fill critical" style="width: 67.42%;"></div>
+            </div>
+            <div class="progress-label">67.4%</div>
+          
+        </div>
+        <div>
+          
+            <span class="period-ach-badge ok">
+              104.4%
+            </span>
+          
+        </div>
+      
+    </div>
+
+    <div class="game-detail" id="detail-gno_sgmy">
+      
+        <div class="insight-box empty">
+          （今日重點尚未填寫）
+        </div>
+
+        <div class="metric-cards">
+          <div class="metric-card">
+            <div class="label">ARPU</div>
+            <div class="value">$2.39</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">ARPPU</div>
+            <div class="value">$31.79</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Pay Rate</div>
+            <div class="value">8.00%</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">月營收達成率</div>
+            <div class="value highlight">
+              
+              73%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="label">即期(9/1~今日)累計達成率</div>
+            <div class="value highlight">
+              
+              104%
+            </div>
+          </div>
+        </div>
+
+        <div class="trend-chart">
+          <div class="title">近 7 日營收趨勢</div>
+          
+          <div class="bars">
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 33.58406149215767%;"
+                   title="10/13: $3,977"></div>
+              <div class="bar-date">10/13</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 100.0%;"
+                   title="10/14: $11,842"></div>
+              <div class="bar-date">10/14</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 61.87192342868435%;"
+                   title="10/15: $7,327"></div>
+              <div class="bar-date">10/15</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 20.133243142133058%;"
+                   title="10/16: $2,384"></div>
+              <div class="bar-date">10/16</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 26.904001263352395%;"
+                   title="10/17: $3,186"></div>
+              <div class="bar-date">10/17</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 23.966960294759705%;"
+                   title="10/18: $2,838"></div>
+              <div class="bar-date">10/18</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 24.964299316556758%;"
+                   title="10/19: $2,956"></div>
+              <div class="bar-date">10/19</div>
+            </div>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+    <div class="game-row" onclick="toggleDetail('csb')">
+      <div class="dot critical"></div>
+      <div class="game-name">CSB</div>
+
+      
+        <div>$2,180</div>
+        <div>1,353</div>
+        <div>8</div>
+        <div class="change-down">
+          
+            -19.9%
+          
+        </div>
+        <div>
+          
+          
+            <div class="progress-track">
+              <div class="progress-fill critical" style="width: 66.53999999999999%;"></div>
+            </div>
+            <div class="progress-label">66.5%</div>
+          
+        </div>
+        <div>
+          
+            <span class="period-ach-badge critical">
+              63.6%
+            </span>
+          
+        </div>
+      
+    </div>
+
+    <div class="game-detail" id="detail-csb">
+      
+        <div class="insight-box empty">
+          （今日重點尚未填寫）
+        </div>
+
+        <div class="metric-cards">
+          <div class="metric-card">
+            <div class="label">ARPU</div>
+            <div class="value">$1.61</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">ARPPU</div>
+            <div class="value">$80.74</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Pay Rate</div>
+            <div class="value">2.00%</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">月營收達成率</div>
+            <div class="value highlight">
+              
+              36%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="label">即期(9/1~今日)累計達成率</div>
+            <div class="value highlight">
+              
+              64%
+            </div>
+          </div>
+        </div>
+
+        <div class="trend-chart">
+          <div class="title">近 7 日營收趨勢</div>
+          
+          <div class="bars">
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 43.874599902249365%;"
+                   title="10/13: $1,194"></div>
+              <div class="bar-date">10/13</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 84.01372918664859%;"
+                   title="10/14: $2,286"></div>
+              <div class="bar-date">10/14</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 67.3858320379537%;"
+                   title="10/15: $1,834"></div>
+              <div class="bar-date">10/15</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 67.94955185377093%;"
+                   title="10/16: $1,849"></div>
+              <div class="bar-date">10/16</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 60.93465774416528%;"
+                   title="10/17: $1,658"></div>
+              <div class="bar-date">10/17</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 100.0%;"
+                   title="10/18: $2,721"></div>
+              <div class="bar-date">10/18</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 80.10590876852575%;"
+                   title="10/19: $2,180"></div>
+              <div class="bar-date">10/19</div>
+            </div>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+    <div class="game-row" onclick="toggleDetail('ms_twhkmo')">
+      <div class="dot ok"></div>
+      <div class="game-name">MS-TWHKMO</div>
+
+      
+        <div>$2,260</div>
+        <div>1,049</div>
+        <div>6</div>
+        <div class="change-up">
+          
+            +87.1%
+          
+        </div>
+        <div>
+          
+          
+            <div class="progress-track">
+              <div class="progress-fill ok" style="width: 100%;"></div>
+            </div>
+            <div class="progress-label">177.1%</div>
+          
+        </div>
+        <div>
+          
+            <span class="period-ach-badge warning">
+              76.3%
+            </span>
+          
+        </div>
+      
+    </div>
+
+    <div class="game-detail" id="detail-ms_twhkmo">
+      
+        <div class="insight-box empty">
+          （今日重點尚未填寫）
+        </div>
+
+        <div class="metric-cards">
+          <div class="metric-card">
+            <div class="label">ARPU</div>
+            <div class="value">$2.15</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">ARPPU</div>
+            <div class="value">$24.05</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Pay Rate</div>
+            <div class="value">9.00%</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">月營收達成率</div>
+            <div class="value highlight">
+              
+              54%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="label">即期(9/1~今日)累計達成率</div>
+            <div class="value highlight">
+              
+              76%
+            </div>
+          </div>
+        </div>
+
+        <div class="trend-chart">
+          <div class="title">近 7 日營收趨勢</div>
+          
+          <div class="bars">
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 19.43394253761294%;"
+                   title="10/13: $576"></div>
+              <div class="bar-date">10/13</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 28.461722657475203%;"
+                   title="10/14: $844"></div>
+              <div class="bar-date">10/14</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 100.0%;"
+                   title="10/15: $2,965"></div>
+              <div class="bar-date">10/15</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 65.82576465311105%;"
+                   title="10/16: $1,952"></div>
+              <div class="bar-date">10/16</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 43.598296161642054%;"
+                   title="10/17: $1,293"></div>
+              <div class="bar-date">10/17</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 40.74102803643759%;"
+                   title="10/18: $1,208"></div>
+              <div class="bar-date">10/18</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 76.23192707086173%;"
+                   title="10/19: $2,260"></div>
+              <div class="bar-date">10/19</div>
+            </div>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+    <div class="game-row" onclick="toggleDetail('ms_sgmy')">
+      <div class="dot ok"></div>
+      <div class="game-name">MS-SGMY</div>
+
+      
+        <div>$1,071</div>
+        <div>927</div>
+        <div>13</div>
+        <div class="change-down">
+          
+            -35.9%
+          
+        </div>
+        <div>
+          
+          
+            <div class="progress-track">
+              <div class="progress-fill ok" style="width: 100%;"></div>
+            </div>
+            <div class="progress-label">114.5%</div>
+          
+        </div>
+        <div>
+          
+            <span class="period-ach-badge warning">
+              93.9%
+            </span>
+          
+        </div>
+      
+    </div>
+
+    <div class="game-detail" id="detail-ms_sgmy">
+      
+        <div class="insight-box empty">
+          （今日重點尚未填寫）
+        </div>
+
+        <div class="metric-cards">
+          <div class="metric-card">
+            <div class="label">ARPU</div>
+            <div class="value">$1.15</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">ARPPU</div>
+            <div class="value">$19.12</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Pay Rate</div>
+            <div class="value">6.00%</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">月營收達成率</div>
+            <div class="value highlight">
+              
+              61%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="label">即期(9/1~今日)累計達成率</div>
+            <div class="value highlight">
+              
+              94%
+            </div>
+          </div>
+        </div>
+
+        <div class="trend-chart">
+          <div class="title">近 7 日營收趨勢</div>
+          
+          <div class="bars">
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 25.86172462406015%;"
+                   title="10/13: $440"></div>
+              <div class="bar-date">10/13</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 23.479205827067666%;"
+                   title="10/14: $400"></div>
+              <div class="bar-date">10/14</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 74.9782659774436%;"
+                   title="10/15: $1,276"></div>
+              <div class="bar-date">10/15</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 100.0%;"
+                   title="10/16: $1,702"></div>
+              <div class="bar-date">10/16</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 65.79710996240603%;"
+                   title="10/17: $1,120"></div>
+              <div class="bar-date">10/17</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 98.13851033834587%;"
+                   title="10/18: $1,671"></div>
+              <div class="bar-date">10/18</div>
+            </div>
+            
+            <div class="bar-col">
+              <div class="bar" style="height: 62.88592575187969%;"
+                   title="10/19: $1,071"></div>
+              <div class="bar-date">10/19</div>
+            </div>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  </div>
+
+  <p style="margin-top: var(--spacing-lg); color: var(--color-text-secondary); font-size: var(--font-size-xs);">
+    本階段「今日重點」為人工填寫欄位，AI 自動歸因將於下一階段接入。
+  </p>
+</div>
+
+<script>
+function toggleDetail(gameId) {
+  const el = document.getElementById('detail-' + gameId);
+  if (!el) return;
+  el.classList.toggle('open');
+}
+
+function copySummary() {
+  const games = [{"achievement": {"nru_ach_rate": 0.9348, "revenue_ach_rate": 0.479}, "cumulative_total": {"arppu": 622.44, "arpu": 87.22, "npu": 46510, "nru": 331924, "pay_rate": 0.14, "revenue": 28949860.61}, "daily": {"arppu": 23.36, "arpu": 1.18, "dau": 1231, "npu": 10, "nru": 43, "pay_rate": 0.05, "pu": 62, "revenue": 1448.54}, "error": null, "game_id": "gno_twhkmo", "game_name": "GNO-TWHKMO", "insight_text": "", "kpi_targets": {"nru_target": 46.0, "revenue_target": 3024.0}, "monthly": {"ach_rate": 0.5348, "arppu": 100.07, "arpu": 17.6, "kpi_target": 125000.0, "mau": 3797, "mpu": 668, "pay_rate": 0.18, "revenue": 66844.12}, "revenue_change_vs_yesterday": -27.62, "status": "critical", "trend_7d": [{"date": "10/13", "revenue": 1961.17}, {"date": "10/14", "revenue": 6227.83}, {"date": "10/15", "revenue": 3784.78}, {"date": "10/16", "revenue": 2852.57}, {"date": "10/17", "revenue": 2849.84}, {"date": "10/18", "revenue": 2001.42}, {"date": "10/19", "revenue": 1448.54}]}, {"achievement": {"nru_ach_rate": 3.2, "revenue_ach_rate": 0.6742}, "cumulative_total": {"arppu": 518.02, "arpu": 83.43, "npu": 20489, "nru": 127219, "pay_rate": 0.16, "revenue": 10613713.05}, "daily": {"arppu": 31.79, "arpu": 2.39, "dau": 1238, "npu": 16, "nru": 80, "pay_rate": 0.08, "pu": 93, "revenue": 2956.15}, "error": null, "game_id": "gno_sgmy", "game_name": "GNO-SGMY", "insight_text": "", "kpi_targets": {"nru_target": 25.0, "revenue_target": 4385.0}, "monthly": {"ach_rate": 0.7267, "arppu": 68.07, "arpu": 15.57, "kpi_target": 114000.0, "mau": 5319, "mpu": 1217, "pay_rate": 0.23, "revenue": 82841.6}, "revenue_change_vs_yesterday": 4.16, "status": "critical", "trend_7d": [{"date": "10/13", "revenue": 3976.86}, {"date": "10/14", "revenue": 11841.51}, {"date": "10/15", "revenue": 7326.57}, {"date": "10/16", "revenue": 2384.08}, {"date": "10/17", "revenue": 3185.84}, {"date": "10/18", "revenue": 2838.05}, {"date": "10/19", "revenue": 2956.15}]}, {"achievement": {"nru_ach_rate": "\u8d85\u51fa\u76ee\u6a19\uff08\u76ee\u6a19\u8a2d\u5b9a\u70ba0\uff09", "revenue_ach_rate": 0.6654}, "cumulative_total": {"arppu": 1551.62, "arpu": 71.27, "npu": 8761, "nru": 190734, "pay_rate": 0.05, "revenue": 13593745.75}, "daily": {"arppu": 80.74, "arpu": 1.61, "dau": 1353, "npu": 25, "nru": 8, "pay_rate": 0.02, "pu": 27, "revenue": 2179.85}, "error": null, "game_id": "csb", "game_name": "CSB", "insight_text": "", "kpi_targets": {"nru_target": 0.0, "revenue_target": 3276.0}, "monthly": {"ach_rate": 0.3633, "arppu": 137.36, "arpu": 15.29, "kpi_target": 110029.0, "mau": 2614, "mpu": 291, "pay_rate": 0.11, "revenue": 39970.5}, "revenue_change_vs_yesterday": -19.89, "status": "critical", "trend_7d": [{"date": "10/13", "revenue": 1193.92}, {"date": "10/14", "revenue": 2286.19}, {"date": "10/15", "revenue": 1833.71}, {"date": "10/16", "revenue": 1849.05}, {"date": "10/17", "revenue": 1658.16}, {"date": "10/18", "revenue": 2721.21}, {"date": "10/19", "revenue": 2179.85}]}, {"achievement": {"nru_ach_rate": 0.8571, "revenue_ach_rate": 1.7714}, "cumulative_total": {"arppu": 335.15, "arpu": 40.28, "npu": 58688, "nru": 488254, "pay_rate": 0.12, "revenue": 19669189.49}, "daily": {"arppu": 24.05, "arpu": 2.15, "dau": 1049, "npu": 94, "nru": 6, "pay_rate": 0.09, "pu": 94, "revenue": 2260.33}, "error": null, "game_id": "ms_twhkmo", "game_name": "MS-TWHKMO", "insight_text": "", "kpi_targets": {"nru_target": 7.0, "revenue_target": 1276.0}, "monthly": {"ach_rate": 0.5376, "arppu": 95.4, "arpu": 21.0, "kpi_target": 63000.0, "mau": 1613, "mpu": 355, "pay_rate": 0.22, "revenue": 33867.14}, "revenue_change_vs_yesterday": 87.11, "status": "ok", "trend_7d": [{"date": "10/13", "revenue": 576.23}, {"date": "10/14", "revenue": 843.91}, {"date": "10/15", "revenue": 2965.07}, {"date": "10/16", "revenue": 1951.78}, {"date": "10/17", "revenue": 1292.72}, {"date": "10/18", "revenue": 1208.0}, {"date": "10/19", "revenue": 2260.33}]}, {"achievement": {"nru_ach_rate": 0.8667, "revenue_ach_rate": 1.145}, "cumulative_total": {"arppu": 182.04, "arpu": 13.39, "npu": 44993, "nru": 611532, "pay_rate": 0.07, "revenue": 8190566.0}, "daily": {"arppu": 19.12, "arpu": 1.15, "dau": 927, "npu": 56, "nru": 13, "pay_rate": 0.06, "pu": 56, "revenue": 1070.57}, "error": null, "game_id": "ms_sgmy", "game_name": "MS-SGMY", "insight_text": "", "kpi_targets": {"nru_target": 15.0, "revenue_target": 935.0}, "monthly": {"ach_rate": 0.6098, "arppu": 84.26, "arpu": 12.08, "kpi_target": 38000.0, "mau": 1918, "mpu": 275, "pay_rate": 0.14, "revenue": 23172.25}, "revenue_change_vs_yesterday": -35.92, "status": "ok", "trend_7d": [{"date": "10/13", "revenue": 440.27}, {"date": "10/14", "revenue": 399.71}, {"date": "10/15", "revenue": 1276.43}, {"date": "10/16", "revenue": 1702.4}, {"date": "10/17", "revenue": 1120.13}, {"date": "10/18", "revenue": 1670.71}, {"date": "10/19", "revenue": 1070.57}]}];
+  const monthlyOverview = {"all": {"ach_rate": 0.5482, "actual": 246695.61, "target": 450029.0}, "month_label": "10\u6708\u4efd", "sgmy": {"ach_rate": 0.6975, "actual": 106013.85, "target": 152000.0}, "twhkmo": {"ach_rate": 0.472, "actual": 140681.76, "target": 298029.0}};
+  const dailyOverview = {"all": {"ach_rate": 0.8458, "actual": 246695.61, "target": 291668.0}, "by_game": {"csb": {"ach_rate": 0.636, "actual": 39970.5, "target": 62844.0}, "gno_sgmy": {"ach_rate": 1.0439, "actual": 82841.6, "target": 79361.0}, "gno_twhkmo": {"ach_rate": 0.8312, "actual": 66844.12, "target": 80417.0}, "ms_sgmy": {"ach_rate": 0.9392, "actual": 23172.25, "target": 24672.0}, "ms_twhkmo": {"ach_rate": 0.7632, "actual": 33867.14, "target": 44374.0}}, "period_label": "10/1~10/19", "sgmy": {"ach_rate": 1.019, "actual": 106013.85, "target": 104033.0}, "twhkmo": {"ach_rate": 0.7498, "actual": 140681.76, "target": 187635.0}};
+  let lines = ["GSTPE 全產品日報 — 2026-10-19", ""];
+
+  const fmtBucket = function (label, m) {
+    const ach = (typeof m.ach_rate === 'number') ? (m.ach_rate * 100).toFixed(1) + '%' : m.ach_rate;
+    const target = (typeof m.target === 'number') ? '$' + m.target.toLocaleString() : m.target;
+    return label + "達成率 " + ach + "（營收 $" + m.actual.toLocaleString() + " / 目標 " + target + "）";
+  };
+
+  if (dailyOverview && dailyOverview.all) {
+    lines.push("累計達成率總覽" + (dailyOverview.period_label ? "（" + dailyOverview.period_label + "）" : "") + "：");
+    lines.push("　" + fmtBucket("全產品", dailyOverview.all));
+    lines.push("　" + fmtBucket("TWHKMO", dailyOverview.twhkmo));
+    lines.push("　" + fmtBucket("SGMY", dailyOverview.sgmy));
+    lines.push("");
+  }
+
+  if (monthlyOverview && monthlyOverview.month_label) {
+    lines.push(monthlyOverview.month_label + "達成率總覽：");
+    lines.push("　" + fmtBucket("全產品", monthlyOverview.all));
+    lines.push("　" + fmtBucket("TWHKMO", monthlyOverview.twhkmo));
+    lines.push("　" + fmtBucket("SGMY", monthlyOverview.sgmy));
+    lines.push("");
+  }
+
+  games.forEach(function (g) {
+    if (g.status === 'data_error') {
+      lines.push(g.game_name + "：資料抓取失敗");
+      return;
+    }
+    const rev = g.daily.revenue != null ? '$' + g.daily.revenue.toLocaleString() : '—';
+    const dau = g.daily.dau != null ? g.daily.dau.toLocaleString() : '資料尚未就緒';
+    const nru = g.daily.nru != null ? g.daily.nru.toLocaleString() : '—';
+    const ach = (typeof g.achievement.revenue_ach_rate === 'number')
+      ? (g.achievement.revenue_ach_rate * 100).toFixed(1) + '%'
+      : g.achievement.revenue_ach_rate;
+    lines.push(g.game_name + "：營收 " + rev + "，DAU " + dau + "，NRU " + nru + "，本日營收達成率 " + ach);
+    if (g.insight_text) lines.push("　" + g.insight_text);
+  });
+  const text = lines.join("\n");
+  navigator.clipboard.writeText(text).then(function () {
+    alert("已複製摘要到剪貼簿");
+  });
+}
+</script>
+</body>
+</html>
